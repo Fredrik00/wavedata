@@ -20,7 +20,7 @@ def main():
     data_set = 'training'
     cam = 2
 
-    root_dir = os.path.expanduser('~') + '/Kitti/object/'
+    root_dir = '/notebooks/DATA/Kitti/object/' #os.path.expanduser('~') + '/Kitti/object/'
 
     image_dir = os.path.join(root_dir, data_set) + '/image_' + str(cam)
     label_dir = os.path.join(root_dir, data_set) + '/label_' + str(cam)
