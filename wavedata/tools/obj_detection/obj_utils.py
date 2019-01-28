@@ -546,4 +546,4 @@ def get_frustum_edge(point_z, extent_z, extent_dir):
     Returns the value of the edge of the frustum in the specified direction
     at debt z.
     """
-    return (point_z/extent_z)*extent_dir
+    return extent_dir*0.2 + (point_z/extent_z)*extent_dir*0.8
