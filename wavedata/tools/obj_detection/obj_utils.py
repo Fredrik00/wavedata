@@ -489,3 +489,61 @@ def get_point_filter(point_cloud, extents, ground_plane=None, offset_dist=2.0):
         point_filter = extents_filter
 
     return point_filter
+
+
+def get_frustum_filter(point_cloud, extents, ground_plane=None, offset_dist=2.0):
+    """
+    Creates a point filter using the 3D extents to create a frustum and ground plane
+
+    :param point_cloud: Point cloud in the form [[x,...],[y,...],[z,...]]
+    :param extents: 3D area in the form (assumes min_z is 0)
+        [[min_x, max_x], [min_y, max_y], [min_z, max_z]]
+    :param ground_plane: Optional, coefficients of the ground plane
+        (a, b, c, d)
+    :param offset_dist: If ground_plane is provided, removes points above
+        this offset from the ground_plane
+    :return: A binary mask for points within the extents and offset plane
+    """
+
+    point_cloud = np.asarray(point_cloud)
+
+    # Filter points within certain xyz range
+    x_extents = extents[0]
+    y_extents = extents[1]
+    z_extents = extents[2]
+
+    extents_filter = (point_cloud[0] > get_frustum_edge(point_cloud[2], z_extents[1], x_extents[0])) & \
+                     (point_cloud[0] < get_frustum_edge(point_cloud[2], z_extents[1], x_extents[1])) & \
+                     (point_cloud[1] > get_frustum_edge(point_cloud[2], z_extents[1], y_extents[0])) & \
+                     (point_cloud[1] < get_frustum_edge(point_cloud[2], z_extents[1], y_extents[1])) & \
+                     (point_cloud[2] > z_extents[0]) & \
+                     (point_cloud[2] < z_extents[1])
+
+    if ground_plane is not None:
+        ground_plane = np.array(ground_plane)
+
+        # Calculate filter using ground plane
+        ones_col = np.ones(point_cloud.shape[1])
+        padded_points = np.vstack([point_cloud, ones_col])
+
+        offset_plane = ground_plane + [0, 0, 0, -offset_dist]
+
+        # Create plane filter
+        dot_prod = np.dot(offset_plane, padded_points)
+        plane_filter = dot_prod < 0
+
+        # Combine the two filters
+        point_filter = np.logical_and(extents_filter, plane_filter)
+    else:
+        # Only use the extents for filtering
+        point_filter = extents_filter
+
+    return point_filter
+
+
+def get_frustum_edge(point_z, extent_z, extent_dir):
+    """
+    Returns the value of the edge of the frustum in the specified direction
+    at debt z.
+    """
+    return (point_z/extent_z)*extent_dir
