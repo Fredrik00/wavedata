@@ -268,6 +268,57 @@ def get_lidar_point_cloud(img_idx, calib_dir, velo_dir,
         return pts[point_filter].T
 
 
+def get_carla_point_cloud(img_idx, calib_dir, velo_dir,
+                          im_size=None, min_intensity=None):
+    """ Calculates the lidar point cloud, and optionally returns only the
+    points that are projected to the image.
+
+    :param img_idx: image index
+    :param calib_dir: directory with calibration files
+    :param velo_dir: directory with velodyne files
+    :param im_size: (optional) 2 x 1 list containing the size of the image
+                      to filter the point cloud [w, h]
+    :param min_intensity: (optional) minimum intensity required to keep a point
+
+    :return: (3, N) point_cloud in the form [[x,...][y,...][z,...]]
+    """
+
+    # Read calibration info
+    frame_calib = calib_utils.read_calibration(calib_dir, img_idx)
+    x, y, z, i = calib_utils.read_carla_lidar(velo_dir=velo_dir, img_idx=img_idx)
+
+    # Calculate the point cloud
+    pts = np.vstack((x, y, z)).T
+    pts = calib_utils.lidar_to_cam_frame(pts, frame_calib)
+
+    # The given image is assumed to be a 2D image
+    if not im_size:
+        point_cloud = pts.T
+        return point_cloud
+
+    else:
+        # Only keep points in front of camera (positive z)
+        pts = pts[pts[:, 2] > 0]
+        point_cloud = pts.T
+
+        # Project to image frame
+        point_in_im = calib_utils.project_to_image(point_cloud, p=frame_calib.p2).T
+
+        # Filter based on the given image size
+        image_filter = (point_in_im[:, 0] > 0) & \
+                       (point_in_im[:, 0] < im_size[0]) & \
+                       (point_in_im[:, 1] > 0) & \
+                       (point_in_im[:, 1] < im_size[1])
+
+    if not min_intensity:
+        return pts[image_filter].T
+
+    else:
+        intensity_filter = i > min_intensity
+        point_filter = np.logical_and(image_filter, intensity_filter)
+        return pts[point_filter].T
+
+
 def get_road_plane(img_idx, planes_dir):
     """Reads the road plane from file
 

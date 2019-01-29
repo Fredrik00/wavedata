@@ -367,6 +367,49 @@ def read_lidar(velo_dir, img_idx):
     else:
         return []
 
+def read_carla_lidar(velo_dir, img_idx):
+    """Reads in PointCloud from Kitti Dataset.
+
+        Keyword Arguments:
+        ------------------
+        velo_dir : Str
+                    Directory of the velodyne files.
+
+        img_idx : Int
+                  Index of the image.
+
+        Returns:
+        --------
+        all_x : Numpy Array
+                   Contains the x coordinates of the pointcloud.
+        all_y : Numpy Array
+                   Contains the y coordinates of the pointcloud.
+        all_z : Numpy Array
+                   Contains the z coordinates of the pointcloud.
+        all_i : Numpy Array
+                   Contains the intensity values of the pointcloud.
+
+        [] : if file is not found
+
+        """
+    velo_dir = velo_dir + "/%06d.ply" % img_idx
+    all_x, all_y, all_z, all_i = [], [], [], []
+
+    if os.path.exists(velo_dir):
+        f = open(velo_dir)
+        lines = f.readlines()[7:] # Skip header
+
+        for line in lines:
+            x, y, z = np.array(line.split(" "), dtype="float")
+            all_x.append(x)
+            all_y.append(y)
+            all_z.append(z)
+            all_i.append(1.0)
+
+        return all_x, all_y, all_z, all_i
+    else:
+        return []
+
 
 def lidar_to_cam_frame(xyz_lidar, frame_calib):
     """Transforms the pointclouds to the camera 0 frame.
