@@ -56,6 +56,10 @@ class VoxelGrid2D(object):
                                    leaf_layout, which will save computation
                                    time.
         """
+        #print(pts[0])
+        if len(pts) == 0:
+            pts = np.array([[0,0,0]])  # Add single point in origin to prevent crashing
+
         # Check if points are 3D, otherwise early exit
         if pts.shape[1] != 3:
             raise ValueError("Points have the wrong shape: {}".format(
