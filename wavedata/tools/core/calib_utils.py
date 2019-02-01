@@ -400,7 +400,7 @@ def read_carla_lidar(velo_dir, img_idx):
         lines = f.readlines()[7:] # Skip header
 
         for line in lines:
-            x, y, z = np.array(line.split(" "), dtype="float")
+            z, x, y = np.array(line.split(" "), dtype="float")
             all_x.append(x)
             all_y.append(y)
             all_z.append(z)

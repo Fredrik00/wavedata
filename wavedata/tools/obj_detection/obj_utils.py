@@ -282,14 +282,19 @@ def get_carla_point_cloud(img_idx, calib_dir, velo_dir,
 
     :return: (3, N) point_cloud in the form [[x,...][y,...][z,...]]
     """
-
     # Read calibration info
     frame_calib = calib_utils.read_calibration(calib_dir, img_idx)
     x, y, z, i = calib_utils.read_carla_lidar(velo_dir=velo_dir, img_idx=img_idx)
 
+    #TODO: Remove this, only used for testing
+    for i in range(len(z)):
+        #y[i] /= 50
+        z[i] += 30
+
     # Calculate the point cloud
     pts = np.vstack((x, y, z)).T
-    pts = calib_utils.lidar_to_cam_frame(pts, frame_calib)
+    #pts = calib_utils.lidar_to_cam_frame(pts, frame_calib)
+    return pts.T
 
     # The given image is assumed to be a 2D image
     if not im_size:
