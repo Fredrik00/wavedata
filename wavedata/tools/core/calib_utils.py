@@ -400,7 +400,10 @@ def read_carla_lidar(velo_dir, img_idx):
         lines = f.readlines()[7:] # Skip header
 
         for line in lines:
-            z, x, y = np.array(line.split(" "), dtype="float")
+            # Convert from local lidar coordinates to kitti coordinate system
+            x, z, y = np.array(line.split(" "), dtype="float")
+            #y *= -1 # Flip height
+            z *= -1 # Flip length 
             all_x.append(x)
             all_y.append(y)
             all_z.append(z)

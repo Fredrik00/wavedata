@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-
+import logging
 from wavedata.tools.core import calib_utils
 
 
@@ -74,12 +74,13 @@ def read_labels(label_dir, img_idx, results=False):
     label_dir -- directory of the label files
     img_idx -- index of the image
     """
-
+    logging.info("Attempting to read labels from {}".format(label_dir))
     # Define the object list
     obj_list = []
 
     # Extract the list
     if os.stat(label_dir + "/%06d.txt" % img_idx).st_size == 0:
+        logging.warning("Could not find file {}. May be empty".format(label_dir + "/%06d.txt" % img_idx))
         return
 
     if results:
@@ -286,15 +287,12 @@ def get_carla_point_cloud(img_idx, calib_dir, velo_dir,
     frame_calib = calib_utils.read_calibration(calib_dir, img_idx)
     x, y, z, i = calib_utils.read_carla_lidar(velo_dir=velo_dir, img_idx=img_idx)
 
-    #TODO: Remove this, only used for testing
-    for i in range(len(z)):
-        #y[i] /= 50
-        z[i] += 30
+    #for i in range(len(z)):
+    #    z[i] += 10
 
     # Calculate the point cloud
     pts = np.vstack((x, y, z)).T
-    #pts = calib_utils.lidar_to_cam_frame(pts, frame_calib)
-    return pts.T
+    pts = calib_utils.lidar_to_cam_frame(pts, frame_calib)
 
     # The given image is assumed to be a 2D image
     if not im_size:
@@ -334,7 +332,7 @@ def get_road_plane(img_idx, planes_dir):
     """
 
     plane_file = planes_dir + '/%06d.txt' % img_idx
-
+    
     with open(plane_file, 'r') as input_file:
         lines = input_file.readlines()
         input_file.close()
