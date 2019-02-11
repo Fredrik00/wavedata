@@ -34,6 +34,9 @@ class VoxelGrid2D(object):
         # Max point height in projected voxel
         self.heights = []
 
+        # Min point height in projected voxel
+        self.min_heights = []
+
         # Number of points corresponding to projected voxel
         self.num_pts_in_voxel = []
 
@@ -89,9 +92,15 @@ class VoxelGrid2D(object):
 
         # The new coordinates are the discretized array with its unique indexes
         _, unique_indices = np.unique(contiguous_array, return_index=True)
+        # Returns the indices of the lowest coordinate by reading the reversed view
+        _, unique_min_indices = np.unique(contiguous_array[::-1], return_index=True)
+
+        # Reverse indices so they refer to the same point
+        unique_min_indices = (len(contiguous_array)-1)-unique_min_indices
 
         # Sort unique indices to preserve order
         unique_indices.sort()
+        unique_min_indices.sort()
 
         voxel_coords = discrete_pts_2d[unique_indices]
 
@@ -104,13 +113,21 @@ class VoxelGrid2D(object):
         if ground_plane is None:
             # Use first point in voxel as highest point
             height_in_voxel = self.points[unique_indices, 1]
+            # Use last point in voxel as lowest point.
+            min_height_in_voxel = self.points[unique_min_indices]
         else:
             # Ground plane provided
             height_in_voxel = geometry_utils.dist_to_plane(
                 ground_plane, self.points[unique_indices])
 
+            min_height_in_voxel = geometry_utils.dist_to_plane(
+                ground_plane, self.points[unique_min_indices])
+
         # Set the height and number of points for each voxel
+        # NOTE min height can be larger than max height if difference is
+        # less than the voxel size
         self.heights = height_in_voxel
+        self.min_heights = min_height_in_voxel
         self.num_pts_in_voxel = num_points_in_voxel
 
         # Find the minimum and maximum voxel coordinates
@@ -122,9 +139,8 @@ class VoxelGrid2D(object):
                     extents.shape))
 
             # Set voxel grid extents
-            self.min_voxel_coord = np.floor(extents_transpose[0] / voxel_size)
-            self.max_voxel_coord = \
-                np.ceil((extents_transpose[1] / voxel_size) - 1)
+            self.min_voxel_coord = np.floor(extents_transpose[0]/voxel_size)
+            self.max_voxel_coord = np.ceil((extents_transpose[1]/voxel_size)-1)
 
             self.min_voxel_coord[1] = 0
             self.max_voxel_coord[1] = 0
