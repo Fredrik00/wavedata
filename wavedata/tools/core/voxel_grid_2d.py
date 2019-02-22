@@ -110,6 +110,13 @@ class VoxelGrid2D(object):
                                         discrete_pts_2d.shape[0] -
                                         unique_indices[-1])
 
+        # Probably incredibly slow...
+        variance = np.zeros_like(num_points_in_voxel)
+        j = 0
+        for i in range(len(variance)):
+            variance[i] = np.var(self.points[j:j+num_points_in_voxel[i]])
+            j += num_points_in_voxel[i]
+
         if ground_plane is None:
             # Use first point in voxel as highest point
             height_in_voxel = self.points[unique_indices, 1]
@@ -129,6 +136,8 @@ class VoxelGrid2D(object):
         self.heights = height_in_voxel
         self.min_heights = min_height_in_voxel
         self.num_pts_in_voxel = num_points_in_voxel
+        self.variance = variance
+        print(variance)
 
         # Find the minimum and maximum voxel coordinates
         if extents is not None:
