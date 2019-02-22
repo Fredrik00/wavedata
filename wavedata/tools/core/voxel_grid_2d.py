@@ -114,7 +114,7 @@ class VoxelGrid2D(object):
         variance = np.zeros_like(num_points_in_voxel)
         j = 0
         for i in range(len(variance)):
-            variance[i] = np.var(self.points[j:j+num_points_in_voxel[i]])
+            variance[i] = np.var(self.points[j:j+num_points_in_voxel[i]], axis=1)
             j += num_points_in_voxel[i]
 
         if ground_plane is None:
