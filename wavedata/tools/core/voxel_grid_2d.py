@@ -138,6 +138,8 @@ class VoxelGrid2D(object):
         self.num_pts_in_voxel = num_points_in_voxel
         self.variance = variance
         print(variance)
+        print(variance.shape)
+        print(self.points.shape)
 
         # Find the minimum and maximum voxel coordinates
         if extents is not None:
