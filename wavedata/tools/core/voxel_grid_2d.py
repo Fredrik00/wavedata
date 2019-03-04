@@ -121,7 +121,7 @@ class VoxelGrid2D(object):
             # Use first point in voxel as highest point
             height_in_voxel = self.points[unique_indices, 1]
             # Use last point in voxel as lowest point.
-            min_height_in_voxel = self.points[unique_min_indices]
+            min_height_in_voxel = self.points[unique_min_indices, 1]
         else:
             # Ground plane provided
             height_in_voxel = geometry_utils.dist_to_plane(
