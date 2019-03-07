@@ -44,7 +44,7 @@ class VoxelGrid2D(object):
         self.leaf_layout_2d = []
 
     def voxelize_2d(self, pts, voxel_size, extents=None,
-                    ground_plane=None, create_leaf_layout=True, slice_maps=[]):
+                    ground_plane=None, create_leaf_layout=True, maps=[]):
         """Voxelizes the point cloud into a 2D voxel grid by
         projecting it down into a flat plane, and stores the maximum
         point height, and number of points corresponding to the voxel
@@ -96,7 +96,7 @@ class VoxelGrid2D(object):
         # Sort unique indices to preserve order
         unique_indices.sort()
 
-        if "max" in slice_maps:
+        if "max" in maps:
             if ground_plane is None:
                 # Use first point in voxel as highest point
                 height_in_voxel = self.points[unique_indices, 1]
@@ -108,12 +108,12 @@ class VoxelGrid2D(object):
             # Store the heights
             self.heights = height_in_voxel
 
-        if "min" in slice_maps:
+        if "min" in maps:
             # Returns the indices of the lowest coordinate by reading the reversed view
             _, unique_min_indices = np.unique(contiguous_array[::-1], return_index=True)
 
             # Reverse indices so they refer to the same point
-            unique_min_indices = (len(contiguous_array)-1)-unique_min_indices
+            unique_min_indices = (len(contiguous_array) - 1) - unique_min_indices
 
             # Sort unique indices to preserve order
             unique_min_indices.sort()
@@ -142,7 +142,7 @@ class VoxelGrid2D(object):
         # Store number of points per voxel
         self.num_pts_in_voxel = num_points_in_voxel
 
-        if "variance" in slice_maps:
+        if "variance" in maps:
             # Probably incredibly slow...
             variance = np.zeros_like(num_points_in_voxel)
             j = 0
