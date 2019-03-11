@@ -132,6 +132,9 @@ class VoxelGrid2D(object):
             self.min_heights = min_height_in_voxel
 
         voxel_coords = discrete_pts_2d[unique_indices]
+        print(voxel_coords)
+        distances = np.sqrt(np.sum(np.square(voxel_coords), axis=0))
+        print(distances)
 
         # Number of points per voxel, last voxel calculated separately
         num_points_in_voxel = np.diff(unique_indices)
