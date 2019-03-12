@@ -43,6 +43,9 @@ class VoxelGrid2D(object):
         # Full occupancy grid, VOXEL_EMPTY or VOXEL_FILLED
         self.leaf_layout_2d = []
 
+        # List of distances of filled voxels from origin, defaulted to a static value of 1
+        self.distances = 1
+
     def voxelize_2d(self, pts, voxel_size, extents=None,
                     ground_plane=None, create_leaf_layout=True, maps=[]):
         """Voxelizes the point cloud into a 2D voxel grid by
@@ -132,9 +135,10 @@ class VoxelGrid2D(object):
             self.min_heights = min_height_in_voxel
 
         voxel_coords = discrete_pts_2d[unique_indices]
-        print(voxel_coords)
-        distances = np.sqrt(np.sum(np.square(voxel_coords), axis=0))
-        print(distances)
+        if "dnd" in maps:
+            # Calculate distances decomposed from x and z coordinates for all filled voxels
+            distances = np.sqrt(np.sum(np.square(voxel_coords*voxel_size), axis=1))
+            self.distances = distances
 
         # Number of points per voxel, last voxel calculated separately
         num_points_in_voxel = np.diff(unique_indices)
