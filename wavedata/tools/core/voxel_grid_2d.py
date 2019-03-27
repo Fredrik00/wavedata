@@ -1,6 +1,6 @@
 import numpy as np
 
-from wavedata.tools.core import geometry_utils
+import geometry_utils
 
 
 class VoxelGrid2D(object):
@@ -45,6 +45,10 @@ class VoxelGrid2D(object):
 
         # List of distances of filled voxels from origin, defaulted to a static value of 1
         self.distances = 1
+
+        # Color of each point for visualization
+        self.colors = []
+
 
     def voxelize_2d(self, pts, voxel_size, extents=None,
                     ground_plane=None, create_leaf_layout=True, maps=[]):
@@ -99,19 +103,12 @@ class VoxelGrid2D(object):
         # Sort unique indices to preserve order
         unique_indices.sort()
 
-        if "max" in maps:
-            if ground_plane is None:
-                # Use first point in voxel as highest point
-                height_in_voxel = self.points[unique_indices, 1]
-            else:
-                # Ground plane provided
-                height_in_voxel = geometry_utils.dist_to_plane(
-                    ground_plane, self.points[unique_indices])
-
+        if "max" in maps or "cluster" in maps:
+            height_in_voxel = self.get_voxel_height(ground_plane, unique_indices)
             # Store the heights
             self.heights = height_in_voxel
 
-        if "min" in maps:
+        if "min" in maps or "cluster" in maps:
             # Returns the indices of the lowest coordinate by reading the reversed view
             _, unique_min_indices = np.unique(contiguous_array[::-1], return_index=True)
 
@@ -121,13 +118,7 @@ class VoxelGrid2D(object):
             # Sort unique indices to preserve order
             unique_min_indices.sort()
 
-            if ground_plane is None:
-                # Use last point in voxel as lowest point.
-                min_height_in_voxel = self.points[unique_min_indices, 1]
-            else:
-                # Ground plane provided
-                min_height_in_voxel = geometry_utils.dist_to_plane(
-                    ground_plane, self.points[unique_min_indices])
+            min_height_in_voxel = self.get_voxel_height(ground_plane, unique_min_indices)
 
             # Store the heights
             # NOTE min height can be larger than max height if difference is
@@ -135,10 +126,6 @@ class VoxelGrid2D(object):
             self.min_heights = min_height_in_voxel
 
         voxel_coords = discrete_pts_2d[unique_indices]
-        if "dnd" in maps:
-            # Calculate distances decomposed from x and z coordinates for all filled voxels
-            distances = np.sqrt(np.sum(np.square(voxel_coords*voxel_size), axis=1))
-            self.distances = distances
 
         # Number of points per voxel, last voxel calculated separately
         num_points_in_voxel = np.diff(unique_indices)
@@ -148,6 +135,11 @@ class VoxelGrid2D(object):
 
         # Store number of points per voxel
         self.num_pts_in_voxel = num_points_in_voxel
+
+        if "dnd" in maps:
+            # Calculate distances decomposed from x and z coordinates for all filled voxels
+            distances = np.sqrt(np.sum(np.square(voxel_coords*voxel_size), axis=1))
+            self.distances = distances
 
         if "variance" in maps:
             # Probably incredibly slow...
@@ -159,6 +151,46 @@ class VoxelGrid2D(object):
 
             # Store the height variance per voxel
             self.variance = variance
+
+        if "cluster" in maps:
+            import random
+            global_clusters = []
+            for i in range(len(unique_indices)):
+                first = unique_indices[i]
+                local_clusters = [[first]]  # List of clusters with index of contained points
+                longest = 1
+                longest_idx = 0
+                num_points = num_points_in_voxel[i]
+                height_diff = abs(self.heights[i] - self.min_heights[i])
+                average_distance = height_diff/num_points
+                if average_distance < voxel_size:
+                    average_distance = voxel_size
+
+                for j in range(first, first + num_points - 1):
+                    distance = abs(self.points[j+1][1] - self.points[j][1])
+                    if distance <= average_distance:
+                        local_clusters[-1].append(j+1)  # Add to current cluster
+                        if len(local_clusters[-1]) > longest:
+                            longest = len(local_clusters[-1])
+                            longest_idx = len(local_clusters) - 1
+                        
+                    else:
+                        local_clusters.append([j+1])  # Add new cluster
+
+                if num_points > 1 and height_diff > voxel_size/5: #and longest > 1: # Removes some noise, but potentially also objects
+                    longest_cluster = local_clusters[longest_idx]
+                    global_clusters.append(longest_cluster)
+
+            self.num_pts_in_cluster = np.array([len(cluster) for cluster in global_clusters])
+            self.cluster_indices = np.array([cluster[0] for cluster in global_clusters]) # Mark cluster location by index of first point
+            self.cluster_min_indices = np.array([cluster[-1] for cluster in global_clusters]) # Mark cluster end location by index of first point
+            self.cluster_heights = self.get_voxel_height(ground_plane, self.cluster_indices)  # Take top point of clusters as max heights
+            self.cluster_min_heights = self.get_voxel_height(ground_plane, self.cluster_min_indices)  # Take bottom point of clusters as min heights
+
+            # In order to only draw selected clusters
+            self.colors = np.array([[0, 0, 0] for point in self.points])
+            for cluster in global_clusters:
+                self.colors[cluster] = [1, 1, 1]
 
         # Find the minimum and maximum voxel coordinates
         if extents is not None:
@@ -205,6 +237,7 @@ class VoxelGrid2D(object):
                                 self.voxel_indices[:, 2]] = \
                 self.VOXEL_FILLED
 
+
     def map_to_index(self, map_index):
         """Converts map coordinate values to 1-based discretized grid index
         coordinate. Note: Any values outside the extent of the grid will be
@@ -230,3 +263,12 @@ class VoxelGrid2D(object):
         indices[:, 1] = np.clip(indices[:, 1], 0, num_divisions_2d[1])
 
         return indices
+
+
+    def get_voxel_height(self, ground_plane, indices):
+            if ground_plane is None:
+                # Use first point in voxel as highest point
+                return self.points[indices, 1]
+            else:
+                # Ground plane provided
+                return geometry_utils.dist_to_plane(ground_plane, self.points[indices])
