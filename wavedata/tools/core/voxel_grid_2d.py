@@ -1,6 +1,6 @@
 import numpy as np
 
-import geometry_utils
+from wavedata.tools.core import geometry_utils
 
 
 class VoxelGrid2D(object):
