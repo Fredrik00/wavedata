@@ -157,8 +157,8 @@ class VoxelGrid2D(object):
             for i in range(len(unique_indices)):
                 first = unique_indices[i]
                 local_clusters = [[first]]  # List of clusters with index of contained points
+                longest_cluster = [first]
                 longest = 1
-                longest_idx = 0
                 num_points = num_points_in_voxel[i]
                 height_diff = abs(self.heights[i] - self.min_heights[i])
                 average_distance = height_diff/num_points
@@ -170,14 +170,13 @@ class VoxelGrid2D(object):
                     if distance <= average_distance:
                         local_clusters[-1].append(j+1)  # Add to current cluster
                         if len(local_clusters[-1]) > longest:
-                            longest = len(local_clusters[-1])
-                            longest_idx = len(local_clusters) - 1
+                            longest_cluster = local_clusters[-1]
+                            longest = len(longest_cluster)
                         
                     else:
                         local_clusters.append([j+1])  # Add new cluster
 
-                if num_points > 1 and height_diff > voxel_size/5: #and longest > 1: # Removes some noise, but potentially also objects
-                    longest_cluster = local_clusters[longest_idx]
+                if num_points > 1 and height_diff > voxel_size/10: #and longest > 1: # Removes some noise, but potentially also objects
                     global_clusters.append(longest_cluster)
 
             cluster_indices = np.array([cluster[0] for cluster in global_clusters]) # Mark cluster location by index of first point
