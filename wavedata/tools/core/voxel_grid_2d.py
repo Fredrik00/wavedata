@@ -153,7 +153,6 @@ class VoxelGrid2D(object):
             self.variance = variance
 
         if "cluster" in maps:
-            import random
             global_clusters = []
             for i in range(len(unique_indices)):
                 first = unique_indices[i]
@@ -181,11 +180,13 @@ class VoxelGrid2D(object):
                     longest_cluster = local_clusters[longest_idx]
                     global_clusters.append(longest_cluster)
 
+            cluster_indices = np.array([cluster[0] for cluster in global_clusters]) # Mark cluster location by index of first point
+            cluster_min_indices = np.array([cluster[-1] for cluster in global_clusters]) # Mark cluster end location by index of first point
+            cluster_coords = discrete_pts_2d[cluster_indices]
+            
             self.num_pts_in_cluster = np.array([len(cluster) for cluster in global_clusters])
-            self.cluster_indices = np.array([cluster[0] for cluster in global_clusters]) # Mark cluster location by index of first point
-            self.cluster_min_indices = np.array([cluster[-1] for cluster in global_clusters]) # Mark cluster end location by index of first point
-            self.cluster_heights = self.get_voxel_height(ground_plane, self.cluster_indices)  # Take top point of clusters as max heights
-            self.cluster_min_heights = self.get_voxel_height(ground_plane, self.cluster_min_indices)  # Take bottom point of clusters as min heights
+            self.cluster_heights = self.get_voxel_height(ground_plane, cluster_indices)  # Take top point of clusters as max heights
+            self.cluster_min_heights = self.get_voxel_height(ground_plane, cluster_min_indices)  # Take bottom point of clusters as min heights
 
             # In order to only draw selected clusters
             self.colors = np.array([[0, 0, 0] for point in self.points])
@@ -226,6 +227,8 @@ class VoxelGrid2D(object):
 
         # Bring the min voxel to the origin
         self.voxel_indices = (voxel_coords - self.min_voxel_coord).astype(int)
+        if "cluster" in maps:
+            self.cluster_voxel_indices = (cluster_coords - self.min_voxel_coord).astype(int)
 
         if create_leaf_layout:
             # Create Voxel Object with -1 as empty/occluded, 0 as occupied
