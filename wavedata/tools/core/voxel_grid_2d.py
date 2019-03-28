@@ -176,8 +176,8 @@ class VoxelGrid2D(object):
                     else:
                         local_clusters.append([j+1])  # Add new cluster
 
-                if num_points > 1 and height_diff > voxel_size/10: #and longest > 1: # Removes some noise, but potentially also objects
-                    global_clusters.append(longest_cluster)
+                #if num_points > 1 and height_diff > voxel_size/10: #and longest > 1: # Removes some noise, but potentially also objects
+                global_clusters.append(longest_cluster)
 
             cluster_indices = np.array([cluster[0] for cluster in global_clusters]) # Mark cluster location by index of first point
             cluster_min_indices = np.array([cluster[-1] for cluster in global_clusters]) # Mark cluster end location by index of first point
