@@ -8,7 +8,7 @@ from wavedata.tools.obj_detection import obj_utils
 
 
 def visualization(image_dir, index, flipped=False, display=True,
-                  fig_size=(15, 9.15)):
+                  fig_size=(16, 9)):
     """Forms the plot figure and axis for the visualization
 
     Keyword arguments:
@@ -58,7 +58,7 @@ def visualization(image_dir, index, flipped=False, display=True,
 
 
 def visualize_single_plot(image_dir, img_idx, flipped=False,
-                          display=True, fig_size=(12.9, 3.9)):
+                          display=True, fig_size=(16, 9)):
     """Forms the plot figure and axis for the visualization
 
     Keyword arguments:
