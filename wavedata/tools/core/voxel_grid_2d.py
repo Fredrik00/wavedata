@@ -154,19 +154,22 @@ class VoxelGrid2D(object):
 
         if "cluster" in maps:
             global_clusters = []
+            height_diffs = np.abs(self.heights - self.min_heights)
+            avg_dists = height_diffs/num_points_in_voxel
+            dists = np.abs(np.diff(self.points[:, 1]))
             for i in range(len(unique_indices)):
                 first = unique_indices[i]
                 local_clusters = [[first]]  # List of clusters with index of contained points
                 longest_cluster = [first]
                 longest = 1
                 num_points = num_points_in_voxel[i]
-                height_diff = abs(self.heights[i] - self.min_heights[i])
-                average_distance = height_diff/num_points
+                height_diff = height_diffs[i]
+                average_distance = avg_dists[i]
                 if average_distance < voxel_size:
                     average_distance = voxel_size
 
                 for j in range(first, first + num_points - 1):
-                    distance = abs(self.points[j+1][1] - self.points[j][1])
+                    distance = dists[j]
                     if distance <= average_distance:
                         local_clusters[-1].append(j+1)  # Add to current cluster
                         if len(local_clusters[-1]) > longest:
@@ -188,9 +191,10 @@ class VoxelGrid2D(object):
             self.cluster_min_heights = self.get_voxel_height(ground_plane, cluster_min_indices)  # Take bottom point of clusters as min heights
 
             # In order to only draw selected clusters
-            self.colors = np.array([[0, 0, 0] for point in self.points])
-            for cluster in global_clusters:
-                self.colors[cluster] = [1, 1, 1]
+            #self.colors = np.array([[0, 0, 0] for point in self.points])
+            #for cluster in global_clusters:
+            #   self.colors[cluster] = [1, 1, 1]
+            #print(np.sum(np.sum(global_clusters)))
 
         # Find the minimum and maximum voxel coordinates
         if extents is not None:
